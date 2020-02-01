@@ -6,6 +6,8 @@
 from encoders import Encoder
 from motorControl import MotorControl
 import signal
+import json
+import time
 
 # This function is called when Ctrl+C is pressed.
 # It's intended for properly exiting the program.
@@ -30,22 +32,24 @@ encoder = Encoder()
 encoder.initEncoders()
 
 # Setup motor control
-motorControl = MotorControl()
+motorControl = MotorControl(encoder)
 
-motorControl.setSpeedsPWM(1.7, 1.3)
+# Check if user wants to calibrate motors
+shouldCalibrateSpeeds = input(
+    "Do you want to calibrate speeds? (y/n): ")
 
-i = 0
+if (shouldCalibrateSpeeds == "y" or shouldCalibrateSpeeds == "Y"):
+    motorControl.calibrateSpeeds()
+else:
+    with open('calibratedSpeeds.json') as json_file:
+        motorControl.speedMap = json.load(json_file)
+
+timer = time.monotonic()
+
+motorControl.setSpeedsIPS(8, 3)
+
+while time.monotonic() - timer < 5:
+    pass
+
 while True:
-    if (i % 80000 == 0):
-        print("Prev tick count:", encoder.getPreviousCounts())
-        print("Current tick count:", encoder.getCounts())
-        print("Time elapsed:", encoder.elapsedTime)
-        print("Speed:", encoder.getSpeeds())
-        print()
-        print()
-        print()
-
-    if (i == 800000):
-        motorControl.setSpeedsPWM(1.5, 1.5)
-        i = 0
-    i += 1
+    pass

@@ -8,53 +8,46 @@ RENCODER = 18
 
 class Encoder:
     def __init__(self):
-        self.PrevLTickCount = 0
-        self.PrevRTickCount = 0
         self.LTickCount = 0
         self.RTickCount = 0
 
         self.LWheelSpeed = 0
         self.RWheelSpeed = 0
 
-        self.startTime = time.monotonic()
-        self.elapsedTime = 0
+        self.LStartTime = time.monotonic()
+        self.RStartTime = time.monotonic()
 
     def resetCounts(self):
-        print("Reseting")
         self.LTickCount = 0
         self.RTickCount = 0
-
-    def getPreviousCounts(self):
-        return self.PrevLTickCount, self.PrevRTickCount
 
     def getCounts(self):
         return self.LTickCount, self.RTickCount
 
     def getSpeeds(self):
-        self.updateTime()
-        LWheelSpeed = (self.LTickCount - self.PrevLTickCount) / \
-            self.elapsedTime
-        RWheelSpeed = (self.RTickCount - self.PrevRTickCount) / \
-            self.elapsedTime
+        lSpeed = self.LWheelSpeed
+        rSpeed = self.RWheelSpeed
 
-        self.resetCounts()
+        if (time.monotonic() - self.LStartTime > 1):
+            lSpeed = 0
+        if (time.monotonic() - self.RStartTime > 1):
+            rSpeed = 0
 
-        return LWheelSpeed, RWheelSpeed
+        return lSpeed, rSpeed
 
     # This function is called when the left encoder detects a rising edge signal.
     def onLeftEncode(self, pin):
-        self.PrevLTickCount = self.LTickCount
         self.LTickCount += 1
-        # print("Left encode", self.elapsedTime)
+        elapsedTime = time.monotonic() - self.LStartTime
+        self.LWheelSpeed = (1/32) / elapsedTime
+        self.LStartTime = time.monotonic()
 
     # This function is called when the right encoder detects a rising edge signal.
     def onRightEncode(self, pin):
-        self.PrevRTickCount = self.RTickCount
         self.RTickCount += 1
-        # print("Right encode", self.elapsedTime)
-
-    def updateTime(self):
-        self.elapsedTime = time.monotonic() - self.elapsedTime
+        elapsedTime = time.monotonic() - self.RStartTime
+        self.RWheelSpeed = (1/32) / elapsedTime
+        self.RStartTime = time.monotonic()
 
     # This function is called when Ctrl+C is pressed.
     # It's intended for properly exiting the program.
