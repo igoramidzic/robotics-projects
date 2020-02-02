@@ -4,6 +4,7 @@ from encoders import Encoder
 from motorControl import MotorControl
 import signal
 import json
+import time
 
 LSERVO = 0
 RSERVO = 1
@@ -49,8 +50,6 @@ if IPS > MAX_IPS:
     print("The distance/seconds combination is not feasible.")
     exit()
 
-print("IPS", IPS)
-
 encoder = Encoder()
 encoder.initEncoders()
 
@@ -61,9 +60,18 @@ with open('calibratedSpeeds.json') as json_file:
 
 motorControl.setSpeedsIPS(IPS, IPS)
 
+# Print speeds for ~10 seconds
+for i in range(333):
+    timer = time.monotonic()
+    while time.monotonic() - timer < 0.03:
+        pass
+
+    if traveledDesiredDistance(encoder.getCounts(), inches):
+        motorControl.setSpeedsPWM(0, 0)
+
+    print(encoder.getSpeeds())
+
 while not traveledDesiredDistance(encoder.getCounts(), inches):
-    print(encoder.getCounts())
-    # print("Hello world!")
     pass
 
 motorControl.setSpeedsPWM(0, 0)

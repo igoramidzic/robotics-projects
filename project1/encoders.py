@@ -28,9 +28,9 @@ class Encoder:
         lSpeed = self.LWheelSpeed
         rSpeed = self.RWheelSpeed
 
-        if (time.monotonic() - self.LStartTime > 1):
+        if (time.monotonic() - self.LStartTime > 0.5):
             lSpeed = 0
-        if (time.monotonic() - self.RStartTime > 1):
+        if (time.monotonic() - self.RStartTime > 0.5):
             rSpeed = 0
 
         return lSpeed, rSpeed
