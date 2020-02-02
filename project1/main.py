@@ -44,12 +44,5 @@ else:
     with open('calibratedSpeeds.json') as json_file:
         motorControl.speedMap = json.load(json_file)
 
-timer = time.monotonic()
-
-motorControl.setSpeedsIPS(8, 3)
-
-while time.monotonic() - timer < 5:
-    pass
-
 while True:
     pass

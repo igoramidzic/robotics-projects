@@ -11,6 +11,9 @@ import json
 LSERVO = 0
 RSERVO = 1
 
+WHEEL_DIAMETER = 2.61
+WHEEL_CIRCUMFERENCE = math.pi * WHEEL_DIAMETER
+
 
 class MotorControl:
     def __init__(self, encoder):
@@ -69,6 +72,43 @@ class MotorControl:
         f.close()
 
         print("Done calibrating.")
+
+    def checkLoad(self):
+        self.setSpeedsPWM(1.6, 1.6)
+
+        lWheelSpeeds = []
+        rWheelSpeeds = []
+
+        # Wait 1 second so motors spin up to desired speed
+        timer1 = time.monotonic()
+        while time.monotonic() - timer1 < 1:
+            pass
+
+        # Take 10 measurements of speed every 30ms
+        timer1 = time.monotonic()
+        while time.monotonic() - timer1 < 10:
+            timer2 = time.monotonic()
+            while time.monotonic() - timer2 < 0.03:
+                pass
+
+            speeds = self.encoder.getSpeeds()
+
+            lWheelSpeeds.append(speeds[LSERVO])
+            rWheelSpeeds.append(speeds[RSERVO])
+
+        print(lWheelSpeeds)
+        print(rWheelSpeeds)
+
+        f = open("lWheelSpeed.json", "w")
+        f.write(str(lWheelSpeeds))
+        f.close()
+
+        f = open("rWheelSpeed.json", "w")
+        f.write(str(rWheelSpeeds))
+        f.close()
+
+        self.setSpeedsPWM(0, 0)
+        exit()
 
     def setSpeedsPWM(self, pwmLeft, pwmRight):
         lPWM = pwmLeft
