@@ -144,8 +144,8 @@ class MotorControl:
 
         self.setSpeedsPWM(float(lClosestPWM), float(rClosestPWM))
 
-    # def setSpeedsVW(self, v, w):
-    #   pass
+    def setSpeedsVW(self, v, w):
+        pass
 
     def cleanup(self):
         # Stop servos
