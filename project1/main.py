@@ -8,6 +8,9 @@ from motorControl import MotorControl
 import signal
 import json
 import time
+import math
+from distance import Distance
+from orientation import Orientation
 
 # This function is called when Ctrl+C is pressed.
 # It's intended for properly exiting the program.
@@ -34,15 +37,31 @@ encoder.initEncoders()
 # Setup motor control
 motorControl = MotorControl(encoder)
 
-# Check if user wants to calibrate motors
-shouldCalibrateSpeeds = input(
-    "Do you want to calibrate speeds? (y/n): ")
-
-if (shouldCalibrateSpeeds == "y" or shouldCalibrateSpeeds == "Y"):
-    motorControl.calibrateSpeeds()
-else:
+try:
     with open('calibratedSpeeds.json') as json_file:
         motorControl.speedMap = json.load(json_file)
 
+except IOError:
+    input("You must calibrate speeds first. Press enter to continue")
+    motorControl.calibrateSpeeds()
+
 while True:
-    pass
+    print("\n(1) Calibrate speeds")
+    print("(2) Distance")
+    print("(3) Orientation")
+    print("(4) Rectangle")
+    print("(5) Circle")
+    taskOption = int(input("Which task you do you want run? (1 - 5): "))
+
+    if taskOption == 1:
+        motorControl.calibrateSpeeds()
+    elif taskOption == 2:
+        distance = Distance(encoder, motorControl)
+        distance.moveDistanceInSeconds()
+    elif taskOption == 3:
+        orientation = Orientation(encoder, motorControl)
+        orientation.rotateDegrees()
+    elif taskOption == 4:
+        pass
+    elif taskOption == 5:
+        pass

@@ -1,9 +1,4 @@
-import sys
 import math
-from encoders import Encoder
-from motorControl import MotorControl
-import signal
-import json
 import time
 
 LSERVO = 0
@@ -11,53 +6,65 @@ RSERVO = 1
 
 WHEEL_DIAMETER = 2.61
 WHEEL_CIRCUMFERENCE = math.pi * WHEEL_DIAMETER
+DIST_BETWEEN_WHEELS = 4.3
+ROBOT_CIRCUMFERENCE = math.pi * DIST_BETWEEN_WHEELS
+MAX_RPS = 0.8
+MAX_IPS = MAX_RPS * WHEEL_CIRCUMFERENCE
 
 
-def ctrlC(signum, frame):
-    # Clean up servos
-    motorControl.cleanup()
+class Orientation:
+    def __init__(self, encoder, motorControl):
+        self.encoder = encoder
+        self.motorControl = motorControl
 
-    # Clean up encoders
-    encoder.cleanup()
+    def rotateDegrees(self):
+        self.encoder.resetCounts()
+        degreesAndSeconds = self.getDegreesAndSecondsFromUser()
+        degrees = float(degreesAndSeconds[0])
+        seconds = float(degreesAndSeconds[1])
 
-    print("Exiting")
-    exit()
+        distanceToTravel = self.getDistanceToTravelFromDegrees(degrees)
+        print("Distance To Travel: ", distanceToTravel)
 
+        while not self.checkIfDegreesAndSecondsCombinationIsFeasible(distanceToTravel, seconds):
+            degreesAndSeconds = self.getDegreesAndSecondsFromUser()
+            degrees = float(degreesAndSeconds[0])
+            seconds = float(degreesAndSeconds[1])
+            distanceToTravel = self.getDistanceToTravelFromDegrees(degrees)
 
-def rotatedDesiredDegrees(tickCounts, desiredDegreesToRotate):
-    return False
+        print(self.getDistanceToTravelFromDegrees(degrees))
+        # self.motorControl.setSpeedsVW(0, 1)
+        self.motorControl.setSpeedsIPS(
+            (distanceToTravel/seconds), -(distanceToTravel/seconds))
 
+        while not self.traveledDesiredDistance(self.encoder.getCounts(), distanceToTravel):
+            time.sleep(0.1)
+            pass
 
-# Attach the Ctrl+C signal interrupt
-signal.signal(signal.SIGINT, ctrlC)
+        self.motorControl.setSpeedsPWM(0, 0)
 
-# Collect arguments from user
-degreesToRotate = float(sys.argv[1])
-seconds = float(sys.argv[2])
+    def getDegreesAndSecondsFromUser(self):
+        degrees = input("Degrees to rotate: ")
+        seconds = input("Seconds: ")
+        return (degrees, seconds)
 
+    def checkIfDegreesAndSecondsCombinationIsFeasible(self, distanceToTravel, seconds):
+        ips = distanceToTravel / seconds
+        if ips > MAX_IPS:
+            print("The degrees/seconds combination is not feasible.")
+            return False
+        return True
 
-encoder = Encoder()
-encoder.initEncoders()
+    def getDistanceToTravelFromDegrees(self, degrees):
+        return ROBOT_CIRCUMFERENCE / (360 / degrees)
 
-motorControl = MotorControl(encoder)
+    def traveledDesiredDistance(self, tickCounts, desiredDistanceInInches):
+        lWheelDistance = tickCounts[LSERVO] / 32 * WHEEL_CIRCUMFERENCE
+        rWheelDistance = tickCounts[RSERVO] / 32 * WHEEL_CIRCUMFERENCE
 
-with open('calibratedSpeeds.json') as json_file:
-    motorControl.speedMap = json.load(json_file)
+        print("Distance traveled:", lWheelDistance, rWheelDistance)
 
-# motorControl.setSpeedsIPS(IPS, IPS)
+        if lWheelDistance > desiredDistanceInInches and rWheelDistance > desiredDistanceInInches:
+            return True
 
-# Print speeds for ~10 seconds
-for i in range(333):
-    timer = time.monotonic()
-    while time.monotonic() - timer < 0.03:
-        pass
-
-    if rotatedDesiredDegrees(encoder.getCounts(), degreesToRotate):
-        motorControl.setSpeedsPWM(0, 0)
-
-    print(encoder.getSpeeds())
-
-# while not rotatedDesiredDegrees(encoder.getCounts(), degreesToRotate):
-#     pass
-
-motorControl.setSpeedsPWM(0, 0)
+        return False

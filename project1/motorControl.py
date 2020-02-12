@@ -13,6 +13,7 @@ RSERVO = 1
 
 WHEEL_DIAMETER = 2.61
 WHEEL_CIRCUMFERENCE = math.pi * WHEEL_DIAMETER
+DIST_BETWEEN_WHEELS = 3.95
 
 
 class MotorControl:
@@ -39,7 +40,7 @@ class MotorControl:
             rWheelSpeeds = [0]
 
             # Set speed
-            self.setSpeedsPWM(pwm, pwm)
+            self.setSpeedsPWM(pwm, 1.5 + (1.5 - pwm) if pwm != 0 else 0)
 
             # Get 5 speeds for each wheel
             for i in range(5):
@@ -112,7 +113,6 @@ class MotorControl:
 
     def setSpeedsPWM(self, pwmLeft, pwmRight):
         lPWM = pwmLeft
-        # rPWM = pwmRight
         rPWM = 1.5 + (1.5 - pwmRight) if pwmRight != 0 else 0
 
         # Due to how servos work, and the design of the Adafruit library,
@@ -142,10 +142,16 @@ class MotorControl:
             if abs(ipsRight + 8.19955 * self.speedMap[rClosestPWM][RSERVO]) > abs(ipsRight + 8.19955 * self.speedMap[key][RSERVO]):
                 rClosestPWM = key
 
+        print(lClosestPWM, rClosestPWM)
         self.setSpeedsPWM(float(lClosestPWM), float(rClosestPWM))
 
     def setSpeedsVW(self, v, w):
-        pass
+        vR = v + (w * DIST_BETWEEN_WHEELS) / 2
+        vL = 2 * v - vR
+
+        print("vR: ", vR, "vL: ", vL)
+
+        self.setSpeedsIPS(vR, vL)
 
     def cleanup(self):
         # Stop servos
