@@ -1,106 +1,86 @@
-import sys
 import math
-from encoders import Encoder
-from motorControl import MotorControl
-import signal
-import json
 import time
 
 LSERVO = 0
 RSERVO = 1
 
-WHEEL_DIAMETER = 2.61
-WHEEL_CIRCUMFERENCE = math.pi * WHEEL_DIAMETER
-MAX_RPS = 0.8
-MAX_IPS = MAX_RPS * WHEEL_CIRCUMFERENCE
 ROTATION_TIME_IN_SECONDS = 0.6
 
 
-def ctrlC(signum, frame):
-    # Clean up servos
-    motorControl.cleanup()
+class Rectangle:
+    def __init__(self, encoder, motorControl, orientation):
+        self.encoder = encoder
+        self.motorControl = motorControl
+        self.orientation = orientation
 
-    # Clean up encoders
-    encoder.cleanup()
+    def travelRectangle(self):
+        self.encoder.resetCounts()
+        heightWidthSeconds = self.getHeightWidthAndSecondsFromUser()
+        H = float(heightWidthSeconds[0])
+        W = float(heightWidthSeconds[1])
+        seconds = float(heightWidthSeconds[2])
 
-    print("Exiting")
-    exit()
+        ips = self.getPerimeter(H, W)/(seconds - 3 * ROTATION_TIME_IN_SECONDS)
 
+        while not self.checkIfDistanceAndSecondsCombinationIsFeasible(ips):
+            heightWidthSeconds = self.getHeightWidthAndSecondsFromUser()
+            H = float(heightWidthSeconds[0])
+            W = float(heightWidthSeconds[1])
+            seconds = float(heightWidthSeconds[2])
+            ips = self.getPerimeter(
+                H, W)/(seconds - 3 * ROTATION_TIME_IN_SECONDS)
 
-# def rotatedDesiredDegrees(tickCounts, desiredDegreesToRotate):
-#     return False
+        # Pattern to move in rectangle
+        self.moveForwardForDistance(H, ips)
+        self.orientation.rotateDegreesAtMaxSpeed(90)
+        self.moveForwardForDistance(W, ips)
+        self.orientation.rotateDegreesAtMaxSpeed(90)
+        self.moveForwardForDistance(H, ips)
+        self.orientation.rotateDegreesAtMaxSpeed(90)
+        self.moveForwardForDistance(W, ips)
+        self.orientation.rotateDegreesAtMaxSpeed(90)
 
+        self.motorControl.setSpeedsPWM(0, 0)
 
-def getPerimeter(H, W):
-    return 2 * H + 2 * W
+    def traveledDesiredDistance(self, tickCounts, desiredDistanceInInches):
+        lWheelDistance = tickCounts[LSERVO] / \
+            32 * self.encoder.WHEEL_CIRCUMFERENCE
+        rWheelDistance = tickCounts[RSERVO] / \
+            32 * self.encoder.WHEEL_CIRCUMFERENCE
 
+        if lWheelDistance > desiredDistanceInInches and rWheelDistance > desiredDistanceInInches:
+            return True
 
-# Attach the Ctrl+C signal interrupt
-signal.signal(signal.SIGINT, ctrlC)
+        return False
 
-# Collect arguments from user
-H = float(sys.argv[1])
-W = float(sys.argv[2])
-seconds = float(sys.argv[3])
+    def getHeightWidthAndSecondsFromUser(self):
+        # Collect arguments from user
+        h = input("Height: ")
+        w = input("Width: ")
+        seconds = input("Seconds: ")
 
+        return (h, w, seconds)
 
-encoder = Encoder()
-encoder.initEncoders()
+    def getIPS(self, inches, seconds):
+        return float(inches) / float(seconds)
 
-motorControl = MotorControl(encoder)
+    def getPerimeter(self, H, W):
+        return 2 * H + 2 * W
 
-with open('calibratedSpeeds.json') as json_file:
-    motorControl.speedMap = json.load(json_file)
-
-try:
-    IPS = getPerimeter(H, W)/(seconds - 3 * ROTATION_TIME_IN_SECONDS)
-    if IPS > MAX_IPS:
-        throw()
-except:
-    print("The distance/seconds combination is not feasible.")
-    exit()
-
-print("IPS:", IPS)
-
-
-def traveledDesiredDistance(tickCounts, desiredDistanceInInches):
-    lWheelDistance = tickCounts[LSERVO] / 32 * WHEEL_CIRCUMFERENCE
-    rWheelDistance = tickCounts[RSERVO] / 32 * WHEEL_CIRCUMFERENCE
-
-    if lWheelDistance > desiredDistanceInInches and rWheelDistance > desiredDistanceInInches:
+    def checkIfDistanceAndSecondsCombinationIsFeasible(self, ips):
+        if abs(ips) > self.encoder.MAX_IPS:
+            print("The height/width/seconds combination is not feasible.")
+            return False
         return True
 
-    return False
+    def moveForwardForDistance(self, distance, ips):
+        self.encoder.resetCounts()
+        self.motorControl.setSpeedsIPS(ips, ips)
+        while not self.traveledDesiredDistance(self.encoder.getCounts(), distance):
+            pass
 
-
-def moveForwardForDistance(distance):
-    motorControl.setSpeedsIPS(IPS, IPS)
-    timer = time.monotonic()
-    while not traveledDesiredDistance(encoder.getCounts(), distance):
-        pass
-
-    encoder.resetCounts()
-
-
-def rotateRight():
-    motorControl.setSpeedsPWM(1.7, 1.3)
-    timer = time.monotonic()
-    while time.monotonic() - timer < ROTATION_TIME_IN_SECONDS:
-        pass
-
-
-moveForwardForDistance(H)
-
-rotateRight()
-
-moveForwardForDistance(W)
-
-rotateRight()
-
-moveForwardForDistance(H)
-
-rotateRight()
-
-moveForwardForDistance(W)
-
-motorControl.setSpeedsPWM(0, 0)
+    def rotateRight(self):
+        self.motorControl.setSpeedsPWM(1.7, 1.3)
+        timer = time.monotonic()
+        while time.monotonic() - timer < ROTATION_TIME_IN_SECONDS:
+            pass

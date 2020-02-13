@@ -11,10 +11,6 @@ import json
 LSERVO = 0
 RSERVO = 1
 
-WHEEL_DIAMETER = 2.61
-WHEEL_CIRCUMFERENCE = math.pi * WHEEL_DIAMETER
-DIST_BETWEEN_WHEELS = 3.95
-
 
 class MotorControl:
     def __init__(self, encoder):
@@ -146,8 +142,12 @@ class MotorControl:
         self.setSpeedsPWM(float(lClosestPWM), float(rClosestPWM))
 
     def setSpeedsVW(self, v, w):
-        vR = v + (w * DIST_BETWEEN_WHEELS) / 2
-        vL = 2 * v - vR
+        radiusOfCircle = v / w
+
+        # vR = v + (w * self.encoder.DIST_BETWEEN_WHEELS) / 2
+        # vL = 2 * v - vR
+        vL = w * (radiusOfCircle + (self.encoder.DIST_BETWEEN_WHEELS / 2))
+        vR = w * (radiusOfCircle - (self.encoder.DIST_BETWEEN_WHEELS / 2))
 
         print("vR: ", vR, "vL: ", vL)
 

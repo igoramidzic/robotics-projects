@@ -1,5 +1,6 @@
 import signal
 import RPi.GPIO as GPIO
+import math
 import time
 
 LENCODER = 17
@@ -8,6 +9,13 @@ RENCODER = 18
 
 class Encoder:
     def __init__(self):
+        self.WHEEL_DIAMETER = 2.55
+        self.DIST_BETWEEN_WHEELS = 4.0
+        self.WHEEL_CIRCUMFERENCE = math.pi * self.WHEEL_DIAMETER
+        self.ROBOT_CIRCUMFERENCE = math.pi * self.DIST_BETWEEN_WHEELS
+        self.MAX_RPS = 0.8
+        self.MAX_IPS = self.MAX_RPS * self.WHEEL_CIRCUMFERENCE
+
         self.LTickCount = 0
         self.RTickCount = 0
 

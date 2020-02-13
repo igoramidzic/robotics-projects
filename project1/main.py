@@ -3,14 +3,16 @@
 # as it will immediately begin moving.
 # See https://learn.adafruit.com/adafruit-16-channel-pwm-servo-hat-for-raspberry-pi/ for more details.
 
-from encoders import Encoder
-from motorControl import MotorControl
 import signal
 import json
 import time
 import math
+from encoders import Encoder
+from motorControl import MotorControl
 from distance import Distance
 from orientation import Orientation
+from rectangle import Rectangle
+from circle import Circle
 
 # This function is called when Ctrl+C is pressed.
 # It's intended for properly exiting the program.
@@ -62,6 +64,11 @@ while True:
         orientation = Orientation(encoder, motorControl)
         orientation.rotateDegrees()
     elif taskOption == 4:
-        pass
+        orientation = Orientation(encoder, motorControl)
+        rectangle = Rectangle(encoder, motorControl, orientation)
+        rectangle.travelRectangle()
     elif taskOption == 5:
+        orientation = Orientation(encoder, motorControl)
+        circle = Circle(encoder, motorControl, orientation)
+        circle.traverseCircle()
         pass

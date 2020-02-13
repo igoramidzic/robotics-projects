@@ -4,11 +4,6 @@ import time
 LSERVO = 0
 RSERVO = 1
 
-WHEEL_DIAMETER = 2.61
-WHEEL_CIRCUMFERENCE = math.pi * WHEEL_DIAMETER
-MAX_RPS = 0.8
-MAX_IPS = MAX_RPS * WHEEL_CIRCUMFERENCE
-
 
 class Distance:
     def __init__(self, encoder, motorControl):
@@ -44,22 +39,13 @@ class Distance:
         while not self.traveledDesiredDistance(self.encoder.getCounts(), inches):
             pass
 
-        print("helllo")
-
         self.motorControl.setSpeedsPWM(0, 0)
 
     def traveledDesiredDistance(self, tickCounts, desiredDistanceInInches):
-        lWheelDistance = tickCounts[LSERVO] / 32 * WHEEL_CIRCUMFERENCE
-        rWheelDistance = tickCounts[RSERVO] / 32 * WHEEL_CIRCUMFERENCE
-
-        if lWheelDistance > abs(desiredDistanceInInches) and rWheelDistance > abs(desiredDistanceInInches):
-            return True
-
-        return False
-
-    def traveledDesiredDistance(self, tickCounts, desiredDistanceInInches):
-        lWheelDistance = tickCounts[LSERVO] / 32 * WHEEL_CIRCUMFERENCE
-        rWheelDistance = tickCounts[RSERVO] / 32 * WHEEL_CIRCUMFERENCE
+        lWheelDistance = tickCounts[LSERVO] / \
+            32 * self.encoder.WHEEL_CIRCUMFERENCE
+        rWheelDistance = tickCounts[RSERVO] / \
+            32 * self.encoder.WHEEL_CIRCUMFERENCE
 
         if lWheelDistance > abs(desiredDistanceInInches) and rWheelDistance > abs(desiredDistanceInInches):
             return True
@@ -67,7 +53,7 @@ class Distance:
         return False
 
     def checkIfDistanceAndSecondsCombinationIsFeasible(self, ips):
-        if abs(ips) > MAX_IPS:
+        if abs(ips) > self.encoder.MAX_IPS:
             print("The distance/seconds combination is not feasible.")
             return False
         return True
