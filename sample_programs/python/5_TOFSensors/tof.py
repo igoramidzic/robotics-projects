@@ -13,7 +13,7 @@ LSHDN = 27
 FSHDN = 22
 RSHDN = 23
 
-DEFAULTADDR = 0x29 # All sensors use this address by default, don't change this
+DEFAULTADDR = 0x29  # All sensors use this address by default, don't change this
 LADDR = 0x2a
 RADDR = 0x2b
 
@@ -58,9 +58,10 @@ for count in range(1, 100):
     lDistance = lSensor.get_distance()
     fDistance = fSensor.get_distance()
     rDistance = rSensor.get_distance()
-    
+
     # Print each measurement
-    print("Left: {}\tFront: {}\tRight: {}".format(lDistance, fDistance, rDistance))
+    print("Left: {}\tFront: {}\tRight: {}".format(
+        lDistance, fDistance, rDistance))
 
 # Stop measurement for all sensors
 lSensor.stop_ranging()
