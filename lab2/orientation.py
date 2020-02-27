@@ -30,7 +30,7 @@ class Orientation:
         # self.motorControl.setSpeedsIPS(
         #     (distanceToTravel/seconds), -(distanceToTravel/seconds))
 
-        self.motorControl.setSpeedsVW(0, radians/seconds)
+        self.motorControl.setSpeedsVW(0, radians / seconds)
 
         while not self.traveledDesiredDistance(self.encoder.getCounts(), distanceToTravel):
             pass
@@ -42,10 +42,10 @@ class Orientation:
         radians = self.convertDegreesToRadians(degrees)
         distanceToTravel = self.getDistanceToTravelFromRadians(radians)
         self.motorControl.setSpeedsIPS(
-            self.encoder.MAX_IPS, -1*self.encoder.MAX_IPS)
+            self.encoder.MAX_IPS, -1 * self.encoder.MAX_IPS)
 
         while not self.traveledDesiredDistance(self.encoder.getCounts(), distanceToTravel):
-            time.sleep(0.1)
+            # time.sleep(0.1)
             pass
 
         self.motorControl.setSpeedsPWM(0, 0)

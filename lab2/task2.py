@@ -24,10 +24,10 @@ def followParallelToWalls(motorControl, tof, pid):
         lIPS = forwardIPS
         rIPS = forwardIPS
 
-        # lIPS = lIPS - pid.getDesiredSpeed(
-        #     desiredDistanceForSides, leftActualDistance)
-        # rIPS = rIPS - pid.getDesiredSpeed(
-        #     desiredDistanceForSides, rightActualDistance)
+        lIPS = lIPS - pid.getDesiredSpeed(
+            desiredDistanceForSides, leftActualDistance)
+        rIPS = rIPS - pid.getDesiredSpeed(
+            desiredDistanceForSides, rightActualDistance)
 
         motorControl.setSpeedsIPS(lIPS, rIPS)
 

@@ -71,7 +71,12 @@ class TOF:
         return self.getInchesFromMM(self.lSensor.get_distance())
 
     def getFrontDistance(self):
-        return self.getInchesFromMM(self.fSensor.get_distance())
+        frontDistance = self.getInchesFromMM(self.fSensor.get_distance())
+        # Set distance to a high number because our sensor is stupid and when
+        # there is something in front of it, it assumes it is really close
+        if frontDistance < 6:
+            return 999
+        return frontDistance
 
     def getRightDistance(self):
         return self.getInchesFromMM(self.rSensor.get_distance())

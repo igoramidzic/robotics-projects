@@ -39,9 +39,11 @@ encoder.initEncoders()
 # Setup motor control
 motorControl = MotorControl(encoder)
 
+orientation = Orientation(encoder, motorControl)
+
 tof = TOF()
 
-pid = PID(1, -6, 6)
+pid = PID(0.5, -6, 6)
 
 try:
     with open('calibratedSpeeds.json') as json_file:
@@ -69,4 +71,4 @@ while True:
     if taskOption == 4:
         task2.followParallelToWalls(motorControl, tof, pid)
     if taskOption == 5:
-        task3.followWall(motorControl, tof, pid)
+        task3.followWall(motorControl, tof, pid, orientation)
