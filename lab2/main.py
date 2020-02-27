@@ -41,7 +41,7 @@ motorControl = MotorControl(encoder)
 
 tof = TOF()
 
-pid = PID(5, -6, 6)
+pid = PID(1, -6, 6)
 
 try:
     with open('calibratedSpeeds.json') as json_file:

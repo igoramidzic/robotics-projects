@@ -21,11 +21,7 @@ class PID:
         return self.Cmin
 
     def getDesiredSpeed(self, desiredDistance, currentDistance):
-        # print("y(t):", -1 * currentDistance)
         distanceError = self.e(desiredDistance, currentDistance)
-        # print("e(t):", distanceError)
         ips = self.u(distanceError)
-        # print("u(t):", ips)
         saturatedIPS = self.fsat(ips)
-        print("ur(t):", saturatedIPS)
         return saturatedIPS
