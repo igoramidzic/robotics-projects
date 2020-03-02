@@ -43,7 +43,7 @@ orientation = Orientation(encoder, motorControl)
 
 tof = TOF()
 
-pid = PID(0.5, -6, 6)
+pid = PID(1, -6, 6)
 
 try:
     with open('calibratedSpeeds.json') as json_file:
@@ -52,7 +52,6 @@ try:
 except IOError:
     input("You must calibrate speeds first. Press enter to continue")
     motorControl.calibrateSpeeds()
-
 
 while True:
     print("\n(1) Calibrate speeds")

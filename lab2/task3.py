@@ -1,55 +1,94 @@
+import time
+
+
 def followWall(motorControl, tof, pid, orientation):
     wallSide = 0
-    desiredDistanceForFront = 12
+    desiredDistanceForFront = 10
+    desiredDistanceForSides = 8
     while (wallSide != "left" and wallSide != "right"):
         wallSide = input('Which wall should I follow? (left, right): ')
 
-    print(wallSide)
-
-    sideActualDistance = 0
-
+    counter = 0
     while True:
+        time.sleep(0.05)
+
         frontActualDistance = tof.getFrontDistance()
         print(frontActualDistance)
+        sideActualDistances = getSaturatedSideDistances(
+            tof, desiredDistanceForSides, wallSide)
+        leftActualDistance = sideActualDistances[0]
+        rightActualDistance = sideActualDistances[1]
 
-        if (wallSide == "right"):
-            sideActualDistance = tof.getRightDistance()
-        else:
-            sideActualDistance = tof.getLeftDistance()
-
-        forwardIPS = pid.getDesiredSpeed(
-            desiredDistanceForFront, frontActualDistance)
-
-        desiredDistanceForSide = 3
+        forwardIPS = 5
 
         lIPS = forwardIPS
         rIPS = forwardIPS
 
-        lIPS = lIPS - pid.getDesiredSpeed(
-            desiredDistanceForSide, sideActualDistance - ())
-        rIPS = rIPS - pid.getDesiredSpeed(
-            desiredDistanceForSide, sideActualDistance)
+        leftStraightenIPS = pid.getDesiredSpeed(
+            desiredDistanceForSides, leftActualDistance)
 
-        print(lIPS, rIPS)
+        rightStraightenIPS = pid.getDesiredSpeed(
+            desiredDistanceForSides, rightActualDistance)
+
+        lIPS = lIPS - leftStraightenIPS
+        rIPS = rIPS - rightStraightenIPS
 
         motorControl.setSpeedsIPS(lIPS, rIPS)
 
-        if (wallSide == "right"):
-            checkRight(tof)
-            # if (tof.getRightDistance() > 7):
-            #     pass
-        else:
-            checkLeft(tof)
+        if (frontActualDistance >= desiredDistanceForFront):
+            counter = 0
 
-        if (tof.getRightDistance() < 7 and tof.getLeftDistance() < 7 and tof.getFrontDistance() < 14):
+        if (frontActualDistance <= desiredDistanceForFront):
+            counter = counter + 1
+            if (counter < 5):
+                continue
+            counter = 0
+            motorControl.setSpeedsPWM(0, 0)
+            time.sleep(1)
+            decideToRotateLeftRightOrUTurn(tof, orientation, wallSide)
+            time.sleep(1)
+
+
+def decideToRotateLeftRightOrUTurn(tof, orientation, wallSide):
+    if wallSide == 'left':
+        if leftSideAvailable(tof):
+            orientation.rotateDegreesAtMaxSpeed(-90)
+        elif rightSideAvailable(tof):
+            orientation.rotateDegreesAtMaxSpeed(90)
+        else:
+            orientation.rotateDegreesAtMaxSpeed(180)
+    else:
+        if rightSideAvailable(tof):
+            orientation.rotateDegreesAtMaxSpeed(90)
+        elif leftSideAvailable(tof):
+            orientation.rotateDegreesAtMaxSpeed(-90)
+        else:
             orientation.rotateDegreesAtMaxSpeed(180)
 
 
-def checkRight(tof):
-    if (tof.getRightDistance() > 12):
-        print("Found right opening!")
+def rightSideAvailable(tof):
+    return tof.getRightDistance() > 12
 
 
-def checkLeft(tof):
-    if (tof.getLeftDistance() > 12):
-        print("Found left opening!")
+def leftSideAvailable(tof):
+    return tof.getLeftDistance() > 12
+
+
+def getSaturatedSideDistances(tof, desiredDistance, wallSide):
+    if wallSide == 'right':
+        rightActualDistance = tof.getRightDistance()
+        leftActualDistance = desiredDistance + \
+            (desiredDistance - rightActualDistance)
+    else:
+        leftActualDistance = tof.getLeftDistance()
+        rightActualDistance = desiredDistance + \
+            (desiredDistance - leftActualDistance)
+
+    if leftActualDistance < 0:
+        leftActualDistance = 0
+    if rightActualDistance < 0:
+        rightActualDistance = 0
+
+    # print(leftActualDistance, rightActualDistance)
+
+    return (leftActualDistance, rightActualDistance)
