@@ -14,8 +14,17 @@ import task3
 # This function is called when Ctrl+C is pressed.
 # It's intended for properly exiting the program.
 
+chart = {'left': [],
+         'front': [],
+         'right': []}
+
 
 def ctrlC(signum, frame):
+    jj = json.dumps(chart)
+    f = open("task3Chart-square.json", "w")
+    f.write(jj)
+    f.close()
+
     # Clean up servos
     motorControl.cleanup()
 
@@ -43,7 +52,7 @@ orientation = Orientation(encoder, motorControl)
 
 tof = TOF()
 
-pid = PID(1, -6, 6)
+pid = PID(0.5, -6, 6)
 
 try:
     with open('calibratedSpeeds.json') as json_file:
@@ -70,4 +79,4 @@ while True:
     if taskOption == 4:
         task2.followParallelToWalls(motorControl, tof, pid)
     if taskOption == 5:
-        task3.followWall(motorControl, tof, pid, orientation)
+        task3.followWall(encoder, motorControl, tof, pid, orientation, chart)

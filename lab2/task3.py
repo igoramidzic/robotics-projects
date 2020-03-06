@@ -1,7 +1,7 @@
 import time
 
 
-def followWall(motorControl, tof, pid, orientation):
+def followWall(encoder, motorControl, tof, pid, orientation, chart):
     wallSide = 0
     desiredDistanceForFront = 10
     desiredDistanceForSides = 8
@@ -9,15 +9,27 @@ def followWall(motorControl, tof, pid, orientation):
         wallSide = input('Which wall should I follow? (left, right): ')
 
     counter = 0
+
+    timer = time.monotonic()
+
+    encoder.resetCounts()
+    leftWheelTickCount = 0
+    rightWheelTickCount = 0
+
     while True:
         time.sleep(0.05)
 
         frontActualDistance = tof.getFrontDistance()
-        print(frontActualDistance)
         sideActualDistances = getSaturatedSideDistances(
             tof, desiredDistanceForSides, wallSide)
         leftActualDistance = sideActualDistances[0]
         rightActualDistance = sideActualDistances[1]
+
+        if time.monotonic() - timer > 0.1:
+            timer = time.monotonic()
+            chart['left'].append(leftActualDistance)
+            chart['front'].append(frontActualDistance)
+            chart['right'].append(rightActualDistance)
 
         forwardIPS = 5
 
@@ -42,6 +54,9 @@ def followWall(motorControl, tof, pid, orientation):
             counter = counter + 1
             if (counter < 5):
                 continue
+
+            leftWheelTickCount = leftWheelTickCount + encoder.getCounts()[0]
+            rightWheelTickCount = rightWheelTickCount + encoder.getCounts()[1]
             counter = 0
             motorControl.setSpeedsPWM(0, 0)
             time.sleep(1)
@@ -52,18 +67,26 @@ def followWall(motorControl, tof, pid, orientation):
 def decideToRotateLeftRightOrUTurn(tof, orientation, wallSide):
     if wallSide == 'left':
         if leftSideAvailable(tof):
+            print("Turning left")
             orientation.rotateDegreesAtMaxSpeed(-90)
         elif rightSideAvailable(tof):
+            print("Turning right")
             orientation.rotateDegreesAtMaxSpeed(90)
         else:
+            print("U-turn")
             orientation.rotateDegreesAtMaxSpeed(180)
     else:
         if rightSideAvailable(tof):
+            print("Turning right")
             orientation.rotateDegreesAtMaxSpeed(90)
         elif leftSideAvailable(tof):
+            print("Turning left")
             orientation.rotateDegreesAtMaxSpeed(-90)
         else:
+            print("U-turn")
             orientation.rotateDegreesAtMaxSpeed(180)
+
+        print("Going straight")
 
 
 def rightSideAvailable(tof):

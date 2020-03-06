@@ -14,6 +14,8 @@ def followParallelToWalls(motorControl, tof, pid):
         frontActualDistance = tof.getFrontDistance()
         rightActualDistance = tof.getRightDistance()
 
+        print(leftActualDistance, frontActualDistance, rightActualDistance)
+
         desiredDistanceForFront = 12
         desiredDistanceForSides = (
             leftActualDistance + rightActualDistance) / 2
@@ -34,11 +36,12 @@ def followParallelToWalls(motorControl, tof, pid):
         if time.monotonic() - timer > 0.1:
             timer = time.monotonic()
             chart['left'].append(leftActualDistance)
+            chart['front'].append(frontActualDistance)
             chart['right'].append(rightActualDistance)
 
-        if not alreadySavedChart and frontActualDistance < 12:
+        if not alreadySavedChart and frontActualDistance < desiredDistanceForFront:
             jj = json.dumps(chart)
-            f = open("distanceChart.json", "w")
+            f = open("task2Chart-0-5.json", "w")
             f.write(jj)
             f.close()
             alreadySavedChart = True
